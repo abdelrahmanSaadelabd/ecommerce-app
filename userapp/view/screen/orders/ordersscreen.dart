@@ -1,0 +1,316 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:jiffy/jiffy.dart';
+import 'package:untitled1/controller/core/constant/colors.dart';
+import 'package:untitled1/controller/core/functions/handling_data_view.dart';
+import 'package:untitled1/controller/orders/orderscontroller.dart';
+
+class Ordersscreen extends StatelessWidget {
+  const Ordersscreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        appColor appcolor = Get.put(appColor());
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
+
+        return Scaffold(
+          appBar: AppBar(
+            centerTitle: true,
+            elevation: 0,
+            backgroundColor: appcolor.appbarcolor,
+            title: Text(
+              "Orders",
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge!.copyWith(color: appcolor.iconcolor),
+            ),
+          ),
+          body: SafeArea(
+            child: Container(
+              width: width,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [appcolor.appbarcolor, Colors.white],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: GetBuilder<Orderscontroller>(
+                  init: Orderscontroller(),
+                  builder: (controller) {
+                    List orders = [...controller.orders];
+                    orders.sort(
+                      (a, b) =>
+                          b["orders_datetime"].compareTo(a["orders_datetime"]),
+                    );
+                    return HandlingDataView(
+                      statusRequst: controller.statusRequst,
+                      widget: ListView.builder(
+                        padding: EdgeInsets.all(10),
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: orders.length,
+                        itemBuilder: (context, i) {
+                          int displayNumber = orders.length - i;
+                          var order = orders[i];
+
+                          return Container(
+                            margin: EdgeInsets.only(top: 20),
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 255, 245, 226),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color.fromARGB(
+                                    255,
+                                    255,
+                                    215,
+                                    86,
+                                  ).withOpacity(0.13),
+                                  spreadRadius: 3,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(18.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Order Number + Time + Delete Icon
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.receipt_long,
+                                            color: appcolor.iconcolor,
+                                            size: width * 0.07,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            "Order #$displayNumber",
+                                            style: TextStyle(
+                                              fontSize: width * 0.05,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          // Delete icon if status is pending
+                                          if (order["orders_status"] == 0)
+                                            InkWell(
+                                              onTap: () {
+                                                int orderid =
+                                                    order["orders_id"];
+                                                controller.deletData(orderid);
+                                              },
+                                              child: Icon(
+                                                Icons.delete_outline_rounded,
+                                                size: 30,
+                                                color: appcolor.iconcolor,
+                                              ),
+                                            ),
+                                          SizedBox(width: 10),
+                                          Text(
+                                            Jiffy.parse(
+                                              order["orders_datetime"],
+                                            ).fromNow(),
+                                            style: TextStyle(
+                                              fontSize: width * 0.045,
+                                              color: appcolor.appbarcolor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  Divider(),
+                                  // Chips for type, payment, status
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 4,
+                                    children: [
+                                      Chip(
+                                        label: Text(
+                                          order["orders_delivery_typ"] == 1
+                                              ? "Delivery"
+                                              : "Pick-Up",
+                                          style: TextStyle(
+                                            fontSize: width * 0.04,
+                                          ),
+                                        ),
+                                        avatar: Icon(
+                                          Icons.delivery_dining,
+                                          size: 18,
+                                          color: appcolor.iconcolor,
+                                        ),
+                                        backgroundColor: Colors.amber[50],
+                                      ),
+                                      Chip(
+                                        label: Text(
+                                          order["orders_payment_typ"] == 1
+                                              ? "Cash"
+                                              : "Cash on Delivery",
+                                          style: TextStyle(
+                                            fontSize: width * 0.04,
+                                          ),
+                                        ),
+                                        avatar: Icon(
+                                          Icons.payments_outlined,
+                                          size: 18,
+                                          color: appcolor.iconcolor,
+                                        ),
+                                        backgroundColor: Colors.green[50],
+                                      ),
+                                      Chip(
+                                        label: Text(
+                                          order["orders_status"] == 1
+                                              ? "Approved & Executed"
+                                              : order["orders_status"] == 2
+                                              ? "Waiting for Delivery"
+                                              : order["orders_status"] == 3
+                                              ? "Picked Up by Delivery and On the Way"
+                                              : order["orders_status"] == 4
+                                              ? "Archived"
+                                              : "Pending Approval",
+                                          style: TextStyle(
+                                            fontSize: width * 0.04,
+                                          ),
+                                        ),
+                                        avatar: Icon(
+                                          Icons.verified,
+                                          size: 18,
+                                          color: appcolor.iconcolor,
+                                        ),
+                                        backgroundColor: Colors.blue[50],
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  // Prices
+                                  Text(
+                                    order["orders_coupon"] > 0
+                                        ? "Price After coupon: \$ ${order["orders_price"]}"
+                                        : "Order Price: \$ ${order["orders_price"]}",
+                                    style: TextStyle(
+                                      fontSize: width * 0.045,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                  Text(
+                                    "Delivery Price: \$ ${order["orders_price_delivery"]}",
+                                    style: TextStyle(
+                                      fontSize: width * 0.045,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  // Total + Details Button
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "Total: \$ ${order["orders_price"] + order["orders_price_delivery"]}",
+                                        style: TextStyle(
+                                          fontSize: width * 0.05,
+                                          fontWeight: FontWeight.bold,
+                                          color: appcolor.appbarcolor,
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          int orderid = order["orders_id"];
+                                          Get.toNamed(
+                                            "/orderdetail",
+                                            arguments: {
+                                              "ordersid": orderid,
+                                              "totalprice":
+                                                  order["orders_price"] +
+                                                  order["orders_price_delivery"],
+                                            },
+                                          );
+                                        },
+                                        child: Container(
+                                          height: height * 0.055,
+                                          width: width * 0.32,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              15,
+                                            ),
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              colors: [
+                                                Color.fromARGB(
+                                                  255,
+                                                  161,
+                                                  124,
+                                                  0,
+                                                ),
+                                                Color.fromARGB(
+                                                  255,
+                                                  199,
+                                                  158,
+                                                  25,
+                                                ),
+                                                Color.fromARGB(
+                                                  255,
+                                                  185,
+                                                  146,
+                                                  16,
+                                                ),
+                                                Color.fromARGB(
+                                                  255,
+                                                  186,
+                                                  159,
+                                                  70,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              "Details",
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodyLarge?.copyWith(
+                                                color: Colors.white,
+                                                fontSize: height * 0.022,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
